@@ -156,15 +156,15 @@ static void usb_server_thread(void * ctx) {
                 }
             }else{
                 Axis* axis0 = axes[0];
-                axis0->controller_.config_.control_mode_ == CTRL_MODE_VELOCITY_CONTROL;
+                axis0->controller_.config_.control_mode == CTRL_MODE_VELOCITY_CONTROL;
                 axis0->controller_.config_.vel_ramp_rate = 2000; // [counts/s^2]
                 axis0->controller_.vel_ramp_enable_ = 1;
-                axis0->controller_.config_.vel_ramp_target_ = 0; // [count/s].
+                axis0->controller_.vel_ramp_target_ = 0; // [count/s].
                 Axis* axis1 = axes[1];
-                axis1->controller_.config_.control_mode_ == CTRL_MODE_VELOCITY_CONTROL;
+                axis1->controller_.config_.control_mode == CTRL_MODE_VELOCITY_CONTROL;
                 axis1->controller_.config_.vel_ramp_rate = 2000; // [counts/s^2]
                 axis1->controller_.vel_ramp_enable_ = 1;
-                axis1->controller_.config_.vel_ramp_target_ = 0; // [count/s].
+                axis1->controller_.vel_ramp_target_ = 0; // [count/s].
             }
         }
     }
