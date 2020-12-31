@@ -120,36 +120,51 @@ static void usb_server_thread(void * ctx) {
     for (;;) {
         // const uint32_t usb_check_timeout = 1; // ms
         osStatus sem_stat = osSemaphoreWait(sem_usb_rx, osWaitForever);
-        if (sem_stat == osOK) {
-            usb_stats_.rx_cnt++;
+        GPIO_PinState nESTOP_state = HAL_GPIO_ReadPin(nESTOP_GPIO_Port, nESTOP_Pin);
+    
+        if (sem_stat == osOK){
+            if(nESTOP_state != GPIO_PIN_RESET) {
+                usb_stats_.rx_cnt++;
 
-            // CDC Interface
-            if (CDC_interface.data_pending) {
-                CDC_interface.data_pending = false;
-                if (board_config.enable_ascii_protocol_on_usb) {
-                    ASCII_protocol_parse_stream(CDC_interface.rx_buf,
-                            CDC_interface.rx_len, usb_stream_output);
-                } else {
-#if defined(USB_PROTOCOL_NATIVE)
-                    usb_channel.process_packet(CDC_interface.rx_buf, CDC_interface.rx_len);
-#elif defined(USB_PROTOCOL_NATIVE_STREAM_BASED)
-                    usb_native_stream_input.process_bytes(
-                            CDC_interface.rx_buf, CDC_interface.rx_len, nullptr);
-#endif
+                // CDC Interface
+                if (CDC_interface.data_pending) {
+                    CDC_interface.data_pending = false;
+                    if (board_config.enable_ascii_protocol_on_usb) {
+                        ASCII_protocol_parse_stream(CDC_interface.rx_buf,
+                                CDC_interface.rx_len, usb_stream_output);
+                    } else {
+    #if defined(USB_PROTOCOL_NATIVE)
+                        usb_channel.process_packet(CDC_interface.rx_buf, CDC_interface.rx_len);
+    #elif defined(USB_PROTOCOL_NATIVE_STREAM_BASED)
+                        usb_native_stream_input.process_bytes(
+                                CDC_interface.rx_buf, CDC_interface.rx_len, nullptr);
+    #endif
+                    }
+                    USBD_CDC_ReceivePacket(&hUsbDeviceFS, CDC_interface.out_ep);  // Allow next packet
                 }
-                USBD_CDC_ReceivePacket(&hUsbDeviceFS, CDC_interface.out_ep);  // Allow next packet
-            }
 
-            // Native Interface
-            if (ODrive_interface.data_pending) {
-                ODrive_interface.data_pending = false;
-#if defined(USB_PROTOCOL_NATIVE)
-                usb_channel.process_packet(ODrive_interface.rx_buf, ODrive_interface.rx_len);
-#elif defined(USB_PROTOCOL_NATIVE_STREAM_BASED)
-                usb_native_stream_input.process_bytes(
-                        ODrive_interface.rx_buf, ODrive_interface.rx_len, nullptr);
-#endif
-                USBD_CDC_ReceivePacket(&hUsbDeviceFS, ODrive_interface.out_ep);  // Allow next packet
+                // Native Interface
+                if (ODrive_interface.data_pending) {
+                    ODrive_interface.data_pending = false;
+    #if defined(USB_PROTOCOL_NATIVE)
+                    usb_channel.process_packet(ODrive_interface.rx_buf, ODrive_interface.rx_len);
+    #elif defined(USB_PROTOCOL_NATIVE_STREAM_BASED)
+                    usb_native_stream_input.process_bytes(
+                            ODrive_interface.rx_buf, ODrive_interface.rx_len, nullptr);
+    #endif
+                    USBD_CDC_ReceivePacket(&hUsbDeviceFS, ODrive_interface.out_ep);  // Allow next packet
+                }
+            }else{
+                Axis* axis0 = axes[0];
+                axis0->controller_.config_.control_mode == CTRL_MODE_VELOCITY_CONTROL;
+                axis0->controller_.config_.vel_ramp_rate = 2000; // [counts/s^2]
+                axis0->controller_.vel_ramp_enable_ = 1;
+                axis0->controller_.config_.vel_ramp_target = 0; // [count/s].
+                Axis* axis1 = axes[1];
+                axis1->controller_.config_.control_mode == CTRL_MODE_VELOCITY_CONTROL;
+                axis1->controller_.config_.vel_ramp_rate = 2000; // [counts/s^2]
+                axis1->controller_.vel_ramp_enable_ = 1;
+                axis1->controller_.config_.vel_ramp_target = 0; // [count/s].
             }
         }
     }

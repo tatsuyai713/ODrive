@@ -175,10 +175,10 @@ bool Motor::update_thermal_limits() {
 }
 
 bool Motor::do_checks() {
-    if (!check_estop_active()) {
-        set_error(ERROR_NOT_IMPLEMENTED_MOTOR_TYPE);
-        return false;
-    }
+    // if (!check_estop_active()) {
+    //     set_error(ERROR_NOT_IMPLEMENTED_MOTOR_TYPE);
+    //     return false;
+    // }
     if (!check_DRV_fault()) {
         set_error(ERROR_DRV_FAULT);
         return false;
