@@ -117,13 +117,17 @@ static USBInterface ODrive_interface = {
 static void usb_server_thread(void * ctx) {
     (void) ctx;
     
+    int e_stop_flag = false;
     for (;;) {
         // const uint32_t usb_check_timeout = 1; // ms
         osStatus sem_stat = osSemaphoreWait(sem_usb_rx, osWaitForever);
         GPIO_PinState nESTOP_state = HAL_GPIO_ReadPin(nESTOP_GPIO_Port, nESTOP_Pin);
+        if(nESTOP_state != GPIO_PIN_RESET) {
+            e_stop_flag = true;
+        }
     
         if (sem_stat == osOK){
-            if(nESTOP_state != GPIO_PIN_RESET) {
+            if(!e_stop_flag) {
                 usb_stats_.rx_cnt++;
 
                 // CDC Interface
